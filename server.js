@@ -12,7 +12,7 @@ app.use(express.json());
 const dbConfig = {
   user: 'COMP214_M24_zou_47',
   password: '520520.Shi',
-  connectString: '199.212.26.208:1521/SQLD',
+  connectString: '199.212.26.208/SQLD',
   //connectString: 'oracle1.centennialcollege.ca/SQLD',
 };
 
@@ -105,7 +105,7 @@ app.get('/api/consByTrans', async (req, res) => {
 // API to fetch CO2 rating percentage
 app.get('/api/co2RatingPct', async (req, res) => {
   try {
-    const data = await fetchData('SELECT co2_rating, count_cr, percentage FROM temp_co2_rating_pct');
+    const data = await fetchData('SELECT model_year, co2_rating, count_cr, percentage FROM temp_co2_rating_pct');
     res.json(data);
   } catch (err) {
     console.error('Error in /api/co2RatingPct:', err.message);

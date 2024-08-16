@@ -81,7 +81,7 @@ const App = () => {
       'co2ByClass': 'BarChart',
       'bestSmog': 'BarChart',
       'consByTrans': 'BarChart',
-      'co2RatingPct': 'BarChart',
+      'co2RatingPct': 'year',
       'topLowCo2': 'BarChart'
     }[endpoint] || 'LineChart';
 
@@ -98,9 +98,46 @@ const App = () => {
 
     const { xKey, yKey } = dataKeyMap[endpoint] || { xKey: 'x', yKey: 'y' };
 
+    const years = [2022, 2023, 2024];
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3', '#19FFDD', '#FFA319'];
 
     switch (chartType) {
+      case'year':
+      return (
+        <div>
+          {years.map(year => {
+            const yearData = data.filter(item => item.MODEL_YEAR === year);
+            return (
+              <div key={year} style={{ marginBottom: '20px' }}>
+                <h3>Model Year: {year}</h3>
+                <ResponsiveContainer width="100%" height={400}>
+                  <PieChart>
+                    <Pie
+                      data={yearData}
+                      dataKey="PERCENTAGE"
+                      nameKey="CO2_RATING"
+                      outerRadius={150}
+                      fill="#8884d8"
+                      label
+                    >
+                    <LabelList
+                      dataKey="CO2_RATING"
+                      position="inside"
+                      style={{ fill: '#fff', fontSize: '14px' }}
+                    />
+                      {yearData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })}
+        </div>
+      );
       case 'PieChart':
         return (
           <ResponsiveContainer width="100%" height="100%">
@@ -114,6 +151,11 @@ const App = () => {
                 label 
                 labelLine={false}
               >
+              <LabelList
+                      dataKey={xKey}
+                      position="inside"
+                      style={{ fill: '#fff', fontSize: '14px' }}
+                    />
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -125,12 +167,41 @@ const App = () => {
         );
       case 'BarChart':
         const barSize = Math.max(40, 200 / data.length);
+        const chartHeight = Math.max(500, data.length * 40);
+        const calculateLabelWidth = (label) => {
+          const averageCharWidth = 8; // Adjust based on font-size, this is an estimate
+          return label ? label.length * averageCharWidth : 0;
+        };
+        
+        // Calculate maximum width required by any label
+// Ensure data is an array and has elements
+const maxLabelWidth = Array.isArray(data) && data.length > 0 
+  ? Math.max(
+      ...data.map(item => {
+        if (!xKey) {
+          console.warn('xKey is undefined or null:', xKey);
+          return 0;
+        }
+
+        const label = item[xKey];
+        if (label === undefined) {
+          console.warn('item[xKey] is undefined for xKey:', xKey);
+          return 0;
+        }
+
+        return calculateLabelWidth(label);
+      })
+    )
+  : 0; // Default to 0 if data is not valid
+
+console.log('maxLabelWidth:', maxLabelWidth);    
+        
         return (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={chartHeight}>
             <BarChart layout="vertical" data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid stroke="#eee" />
               <XAxis type="number" tickFormatter={(value) => value.toFixed(2)} />
-              <YAxis type="category" dataKey={xKey} />
+              <YAxis type="category" dataKey={xKey} width={maxLabelWidth} />
               <Tooltip formatter={(value) => value.toFixed(2)} />
               <Legend />
               <Bar dataKey={yKey} fill="#8884d8" barSize={barSize} minPointLength={10}>
